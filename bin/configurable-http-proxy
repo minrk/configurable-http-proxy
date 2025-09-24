@@ -423,3 +423,27 @@ process.on("uncaughtException", function (e) {
     log.error(e.stack);
   }
 });
+
+// DEBUG: dump netstat every $NETSTAT_SECONDS for debugging purposes
+
+import { promisify } from 'node:util';
+import child_process from 'node:child_process';
+const exec = promisify(child_process.exec);
+
+if (process.env.NETSTAT_SECONDS) {
+  log.info(`Logging netstat every ${process.env.NETSTAT_SECONDS}`)
+  const netstat_seconds = parseInt(process.env.NETSTAT_SECONDS);
+  async function netstat() {
+    const { stdout, stderr } = await exec("netstat -nat");
+    if (stderr) {
+      log.error(stderr);
+    }
+    log.info(stdout);
+    for (const state of ["ESTABLISHED", "TIME_WAIT"]) {
+      const count = (stdout.match(new RegExp(state, "g")) || []).length;
+      log.info(`${count} ${state} sockets`);
+    }
+    setTimeout(netstat, netstat_seconds * 1000);
+  }
+  netstat();
+}

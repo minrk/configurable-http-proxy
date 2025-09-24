@@ -13,7 +13,8 @@ LABEL org.opencontainers.image.url="https://github.com/jupyterhub/configurable-h
 RUN apk upgrade --no-cache \
  && apk add --no-cache \
         curl \
-        jq
+        jq \
+        net-tools
 
 # Copy relevant (see .dockerignore)
 RUN mkdir -p /srv/configurable-http-proxy
@@ -22,7 +23,7 @@ WORKDIR /srv/configurable-http-proxy
 
 # Install configurable-http-proxy according to package-lock.json (ci) without
 # devDepdendencies (--production), then uninstall npm which isn't needed.
-RUN npm ci --production \
+RUN npm ci --omit=dev \
  && npm uninstall -g npm
 
 # Switch from the root user to the nobody user
